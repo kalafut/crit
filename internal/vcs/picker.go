@@ -37,6 +37,12 @@ func TopicChainSHAs(v VCS, repoRoot string) map[string]bool {
 		}
 		return out
 	}
+	if v.Name() == "fossil" {
+		for _, sha := range fossilTopicChain(repoRoot, defaultBranch, 0) {
+			out[sha] = true
+		}
+		return out
+	}
 	revs, err := SLCommandInDir(repoRoot, "log", "-r", "draft() & ::.", "-T", "{node}\n")
 	if err != nil {
 		return out
@@ -62,6 +68,8 @@ func CommitSubjectFor(v VCS, repoRoot, sha string) string {
 		subject = strings.TrimSpace(out)
 	case "jj":
 		subject = JJCommitSubject(repoRoot, sha)
+	case "fossil":
+		subject = FossilCommitSubject(repoRoot, sha)
 	default:
 		out, err := SLCommandInDir(repoRoot, "log", "-r", sha, "-T", "{desc|firstline}")
 		if err != nil {

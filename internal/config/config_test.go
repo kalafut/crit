@@ -112,6 +112,17 @@ func TestMergeConfigs_AuthorFallback_JJ_PreservesExplicitAuthor(t *testing.T) {
 	}
 }
 
+func TestMergeConfigs_AuthorFallback_Fossil_PreservesExplicitAuthor(t *testing.T) {
+	global := Config{VCS: "fossil", Author: "Explicit Author"}
+	merged := mergeConfigs(global, Config{}, ConfigPresence{})
+	if merged.VCS != "fossil" {
+		t.Errorf("merged.VCS = %q, want fossil", merged.VCS)
+	}
+	if merged.Author != "Explicit Author" {
+		t.Errorf("merged.Author = %q, want %q", merged.Author, "Explicit Author")
+	}
+}
+
 func TestLoadConfigFileInvalidJSON(t *testing.T) {
 	dir := t.TempDir()
 	configPath := filepath.Join(dir, ".crit.config.json")

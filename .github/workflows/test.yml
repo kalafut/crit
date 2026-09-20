@@ -32,6 +32,12 @@ jobs:
           sudo ln -sf /opt/sapling/sl /usr/local/bin/sl
           sl --version
 
+      - name: Install fossil
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fossil
+          fossil version
+
       - name: Cache Go build cache
         uses: actions/cache@v6
         with:
@@ -207,6 +213,12 @@ jobs:
             | sudo tar xJ -C /opt/sapling
           sudo ln -sf /opt/sapling/sl /usr/local/bin/sl
           sl --version
+
+      - name: Install fossil
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fossil
+          fossil version
 
       - name: Cache Go build cache
         uses: actions/cache@v6

@@ -26,9 +26,26 @@ func CompareTargetsFor(v VCS, dir string) (CompareTargets, error) {
 		return jjCompareTargets(v, dir)
 	case "sl":
 		return saplingCompareTargets(v, dir)
+	case "fossil":
+		return fossilCompareTargets(v, dir)
 	default:
 		return gitCompareTargets(v, dir)
 	}
+}
+
+// fossilCompareTargets lists every Fossil branch as a local target; Fossil
+// has no remote-tracking branches.
+func fossilCompareTargets(v VCS, dir string) (CompareTargets, error) {
+	local, err := (&FossilVCS{}).Branches(dir)
+	if err != nil {
+		return CompareTargets{}, err
+	}
+	return CompareTargets{
+		VCS:      "fossil",
+		Detected: v.DefaultBranch(),
+		Local:    local,
+		Remote:   nil,
+	}, nil
 }
 
 func gitCompareTargets(v VCS, dir string) (CompareTargets, error) {

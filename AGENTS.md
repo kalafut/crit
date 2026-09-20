@@ -40,7 +40,7 @@ crit/
 12. **Headless CLI comment** — `crit comment` writes directly to the review file without starting the server; SSE notifies any running server
 13. **Comment threading** — comments support nested replies and a `resolved` boolean. Review file schema nests replies inside each comment's `replies` array.
 14. **Centralized review storage** — `~/.crit/reviews/<key>.json` keyed by cwd + branch (git mode) or cwd + args (file mode)
-15. **VCS abstraction** — `vcs.go` defines a backend interface; `git_vcs.go`, `sapling.go`, and `jj.go` are the implementations. Auto-detected, overridable via `--vcs` flag or `vcs` config key. Subcommands not yet threaded through (see TODO at `main.go:1826`).
+15. **VCS abstraction** — `vcs.go` defines a backend interface; `git_vcs.go`, `sapling.go`, `jj.go`, and `fossil.go` are the implementations. Auto-detected, overridable via `--vcs` flag or `vcs` config key. Subcommands not yet threaded through (see TODO at `main.go:1826`).
 16. **Focus mode** — sub-views over the file list: file focus, range focus (`--range A..B`), stacked focus (range layer in a stacked PR). Lives in `focus_*.go` and `/api/focus`.
 
 <important if="you are writing a plan, design doc, or implementation proposal, or about to commit">
@@ -116,7 +116,7 @@ Config keys: `port`, `host`, `no_open`, `share_url`, `quiet`, `output`, `author`
 - `ignore_patterns` are unioned (global + project both apply); types: `*.ext`, `dir/`, `exact.file`, `path/*.ext`
 - `auto_viewed_patterns` are unioned (global + project both apply); matched client-side against file paths and applied once per launch to auto-mark matching files viewed (collapsed). No runtime default (empty). Plumbed through `/api/config` only — Go does no glob matching.
 - `default_markdown_view` (`"diff"` | `"document"`, default unset = diff in git mode) — initial view for markdown files (Document/Diff toggle) in git mode. Project **overrides** global (scalar, not unioned). Invalid values are ignored with a stderr warning. No CLI flag. Plumbed through `/api/config` only.
-- `vcs` selects backend: `"git"` (default), `"sl"` (sapling), or `"jj"` (Jujutsu)
+- `vcs` selects backend: `"git"` (default), `"sl"` (sapling), `"jj"` (Jujutsu), or `"fossil"`
 - `auth_*` keys hold cached hosted-crit-web credentials (set by `crit auth`); treat as secrets
 - `live_cookie` / `live_cookie_file` forward session cookies to the upstream app in live mode (global or project; prefer gitignored `live_cookie_file` e.g. `.crit/live-cookies.txt`). CLI: `crit live --cookie`, `--cookie-file`
 - `live_cdp_url` reuses cookies from a local Chrome DevTools endpoint (global or project). CLI: `crit live --cdp-url`. Explicit `--cookie` values override CDP cookies with the same name.

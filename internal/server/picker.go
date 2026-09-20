@@ -165,6 +165,10 @@ func assignStackBases(v vcs.VCS, entries []StackEntry, repoRoot string) []StackE
 					entries[i].BaseSHA = strings.TrimSpace(mb)
 				}
 			}
+		case "fossil":
+			if mb, err := v.MergeBaseOf(entries[i].HeadSHA, defaultBranch, repoRoot); err == nil {
+				entries[i].BaseSHA = mb
+			}
 		default:
 			out, err := vcs.SLCommandInDir(repoRoot, "log", "-r",
 				fmt.Sprintf("ancestor(%s, %s)", entries[i].HeadSHA, defaultBranch),

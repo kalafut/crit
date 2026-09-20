@@ -8880,7 +8880,7 @@
   function isRevishQuery(q) {
     const t = q.trim();
     if (!t) return false;
-    if (/^[0-9a-f]{7,40}$/i.test(t)) return true;
+    if (/^[0-9a-f]{7,64}$/i.test(t)) return true;
     if (/^HEAD(?:[~^]\d+)?$/i.test(t)) return true;
     if (t === '@' || /^@[-a-z0-9]+$/i.test(t)) return true;
     return false;

@@ -138,32 +138,14 @@ type VCS interface {
 }
 
 // DetectVCS returns the appropriate VCS backend for the current directory.
-// If vcsOverride is set ("git", "sl"/"sapling", or "jj"), that backend is
+// If vcsOverride is set ("git", "sl"/"sapling", "jj", or "fossil"), that backend is
 // preferred but falls back to git if the requested backend isn't available.
 // Otherwise, auto-detection checks for .jj/ first, then .sl/ (Sapling on git
-// repos has both), then falls back to git. Returns nil if no VCS is detected.
+// repos has both), then a Fossil checkout marker, then falls back to git.
+// Returns nil if no VCS is detected.
 func DetectVCS(vcsOverride string) VCS {
-	switch vcsOverride {
-	case "git":
-		return &GitVCS{}
-	case "sl", "sapling":
-		if _, err := exec.LookPath("sl"); err == nil {
-			return &SaplingVCS{}
-		}
-		fmt.Fprintf(os.Stderr, "Warning: vcs=%q requested but sl not in PATH, falling back to git\n", vcsOverride)
-		if IsGitRepo() {
-			return &GitVCS{}
-		}
-		return nil
-	case "jj", "jujutsu":
-		if _, err := exec.LookPath("jj"); err == nil {
-			return &JJVCS{}
-		}
-		fmt.Fprintf(os.Stderr, "Warning: vcs=%q requested but jj not in PATH, falling back to git\n", vcsOverride)
-		if IsGitRepo() {
-			return &GitVCS{}
-		}
-		return nil
+	if v, handled := detectVCSOverride(vcsOverride); handled {
+		return v
 	}
 
 	// Auto-detect: check for .jj/ first since colocated JJ repos also have .git/.
@@ -180,6 +162,15 @@ func DetectVCS(vcsOverride string) VCS {
 		}
 	}
 
+	// A Fossil checkout marker (.fslckout / _FOSSIL_) is a file, not a
+	// directory, and Fossil checkouts never carry a .git, so check it before
+	// the git fallback.
+	if hasFossilCheckout() {
+		if _, err := exec.LookPath("fossil"); err == nil {
+			return &FossilVCS{}
+		}
+	}
+
 	if IsGitRepo() {
 		// Check if Sapling metadata exists under .git/sl — this means sl was used
 		// here but it's primarily a git repo. Hint but don't switch automatically.
@@ -190,6 +181,41 @@ func DetectVCS(vcsOverride string) VCS {
 	}
 
 	return nil
+}
+
+// vcsOverrideBackends maps `--vcs` / config values for non-git backends to
+// the binary they need and a constructor.
+var vcsOverrideBackends = map[string]struct {
+	bin    string
+	newVCS func() VCS
+}{
+	"sl":      {"sl", func() VCS { return &SaplingVCS{} }},
+	"sapling": {"sl", func() VCS { return &SaplingVCS{} }},
+	"jj":      {"jj", func() VCS { return &JJVCS{} }},
+	"jujutsu": {"jj", func() VCS { return &JJVCS{} }},
+	"fossil":  {"fossil", func() VCS { return &FossilVCS{} }},
+}
+
+// detectVCSOverride resolves an explicit backend request. handled is false
+// when vcsOverride names no known backend and auto-detection should run.
+// A known backend whose binary is missing warns and falls back to git (or
+// nil when cwd is not a git repo either).
+func detectVCSOverride(vcsOverride string) (v VCS, handled bool) {
+	if vcsOverride == "git" {
+		return &GitVCS{}, true
+	}
+	backend, ok := vcsOverrideBackends[vcsOverride]
+	if !ok {
+		return nil, false
+	}
+	if _, err := exec.LookPath(backend.bin); err == nil {
+		return backend.newVCS(), true
+	}
+	fmt.Fprintf(os.Stderr, "Warning: vcs=%q requested but %s not in PATH, falling back to git\n", vcsOverride, backend.bin)
+	if IsGitRepo() {
+		return &GitVCS{}, true
+	}
+	return nil, true
 }
 
 // hasJJDir checks whether a .jj/ directory exists at or above the current directory.

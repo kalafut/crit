@@ -294,13 +294,13 @@ func printHelp() {
 
 Getting started:
   crit install <agent>                       Set up crit for your AI coding tool
-  crit                                       Review your current changes (auto-detects git)
+  crit                                       Review your current changes (auto-detects your VCS)
 
 Commands:
   %s
 
 Review:
-  crit                                       Auto-detect changed files via git
+  crit                                       Auto-detect changed files (git/sapling/jj/fossil)
   crit <file|dir> [...]                      Review specific files or directories
   crit live <url>                            Review a running web app in live mode
   crit preview <file.html>                   Review a local HTML file in preview mode

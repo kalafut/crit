@@ -480,6 +480,11 @@ func LoadConfig(projectDir string) Config { //nolint:gocyclo // Config precedenc
 			if merged.Author == "" {
 				merged.Author = gitUserName()
 			}
+		case "fossil":
+			merged.Author = fossilUserName()
+			if merged.Author == "" {
+				merged.Author = gitUserName()
+			}
 		default:
 			merged.Author = gitUserName()
 			if merged.Author == "" {
@@ -642,6 +647,15 @@ func gitUserName() string {
 // jjUserName returns the JJ-configured user name, or empty on error.
 func jjUserName() string {
 	out, err := exec.Command("jj", "config", "get", "user.name").Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
+}
+
+// fossilUserName returns the default Fossil user for the current checkout, or empty on error.
+func fossilUserName() string {
+	out, err := exec.Command("fossil", "user", "default").Output()
 	if err != nil {
 		return ""
 	}

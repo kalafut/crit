@@ -367,7 +367,7 @@ All keys are optional — omit any you don't need.
 | `notify_on_round_ready`| bool     | `false`                    | Opt in to a desktop notification when a review round becomes ready for you (after the agent finishes addressing comments). On macOS, install [`terminal-notifier`](https://github.com/julienXX/terminal-notifier) (`brew install terminal-notifier`) so clicking the notification opens the review URL — without it, clicking falls back to AppleScript's `display notification`, which macOS attributes to Script Editor and activates that instead of your browser. |
 | `no_update_check`      | bool     | `false`                    | Don't check for new versions on startup.                                                                                                                                                |
 | `no_integration_check` | bool     | `false`                    | Skip the integration config freshness check on startup.                                                                                                                                 |
-| `vcs`                  | string   | auto-detected              | Preferred VCS backend: `"git"`, `"sl"`, or `"jj"`. When set, crit uses this VCS instead of auto-detecting. Falls back to git if the configured VCS isn't available. Can also be set via `--vcs` CLI flag (flag takes precedence over config). |
+| `vcs`                  | string   | auto-detected              | Preferred VCS backend: `"git"`, `"sl"`, `"jj"`, or `"fossil"`. When set, crit uses this VCS instead of auto-detecting. Falls back to git if the configured VCS isn't available. Can also be set via `--vcs` CLI flag (flag takes precedence over config). |
 | `live_cookie`          | string   | `""`                       | Cookie header value forwarded to the upstream app in live mode (e.g. `"_crit_key=..."`). Global or project. Prefer `live_cookie_file` for secrets. |
 | `live_cookie_file`     | string   | `""`                       | Path to a file with upstream cookies for live mode (raw header lines or Netscape jar). Global or project; relative paths resolve from repo root. |
 | `live_cdp_url`         | string   | `""`                       | Chrome DevTools URL (e.g. `http://127.0.0.1:9222`) to reuse browser cookies for the live upstream. Global or project. |
@@ -426,7 +426,7 @@ These keys can only be set in `~/.crit.config.json` (global). Project-level `.cr
 | `--output`      | `-o`  | `output`              | Crit data root for reviews (`<root>/reviews/<key>/`). |
 | `--quiet`       | `-q`  | `quiet`               | On success, suppress connect/start status, tips, and session summary                 |
 | `--base-branch` |       | `base_branch`         | Base branch to diff against            |
-| `--vcs`         |       | `vcs`                 | VCS backend (`git`, `sl`, or `jj`)     |
+| `--vcs`         |       | `vcs`                 | VCS backend (`git`, `sl`, `jj`, `fossil`)|
 | `--no-ignore`   |       |                       | Temporarily bypass all ignore patterns |
 | `--version`     | `-v`  |                       | Print version and exit                 |
 

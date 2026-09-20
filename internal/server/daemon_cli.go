@@ -102,7 +102,7 @@ func parseDaemonFlags(args []string) daemonFlagSet {
 	fs.BoolVar(quiet, "q", false, "On success, suppress connect/start status, tips, and session summary (shorthand)")
 	noIgnore := fs.Bool("no-ignore", false, "Disable all ignore patterns from config files")
 	baseBranch := fs.String("base-branch", "", "Base branch to diff against (overrides auto-detection)")
-	vcsFlag := fs.String("vcs", "", "VCS backend to use: git, sl/sapling, jj/jujutsu (default: auto-detect)")
+	vcsFlag := fs.String("vcs", "", "VCS backend to use: git, sl/sapling, jj/jujutsu, fossil (default: auto-detect)")
 	planDir := fs.String("plan-dir", "", "")
 	planName := fs.String("name", "", "")
 	changeSpec := ""
@@ -360,7 +360,7 @@ func PreflightCheck(sc *DaemonCLIConfig) string {
 	v := vcs.DetectVCS(sc.VCSOverride)
 	if v == nil {
 		return "Not in a version-controlled repository.\n\n" +
-			"  crit              review changed files (run inside a git/sapling/jj repo)\n" +
+			"  crit              review changed files (run inside a git/sapling/jj/fossil repo)\n" +
 			"  crit <file...>    review specific file(s)\n"
 	}
 	if sc.BaseBranch != "" {

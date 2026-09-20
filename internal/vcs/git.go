@@ -621,16 +621,26 @@ func ResolveDefaultBranchSHA(vcs VCS, repoRoot, defaultBranch string) (string, e
 			return strings.TrimSpace(sha), nil
 		}
 		return "", fmt.Errorf("could not resolve %s tip", defaultBranch)
+	case "fossil":
+		sha, err := FossilResolve(repoRoot, defaultBranch)
+		if err != nil {
+			return "", fmt.Errorf("could not resolve %s tip: %w", defaultBranch, err)
+		}
+		return sha, nil
 	default:
-		// Sapling: try remote bookmark, then local.
-		if out, err := SLCommandInDir(repoRoot, "log", "-r", "remote/"+defaultBranch, "-T", "{node}"); err == nil && strings.TrimSpace(out) != "" {
-			return strings.TrimSpace(out), nil
-		}
-		if out, err := SLCommandInDir(repoRoot, "log", "-r", defaultBranch, "-T", "{node}"); err == nil && strings.TrimSpace(out) != "" {
-			return strings.TrimSpace(out), nil
-		}
-		return "", fmt.Errorf("could not resolve %s tip", defaultBranch)
+		return resolveSaplingDefaultBranchSHA(repoRoot, defaultBranch)
 	}
+}
+
+// resolveSaplingDefaultBranchSHA tries the remote bookmark first, then the
+// local one.
+func resolveSaplingDefaultBranchSHA(repoRoot, defaultBranch string) (string, error) {
+	for _, rev := range []string{"remote/" + defaultBranch, defaultBranch} {
+		if out, err := SLCommandInDir(repoRoot, "log", "-r", rev, "-T", "{node}"); err == nil && strings.TrimSpace(out) != "" {
+			return strings.TrimSpace(out), nil
+		}
+	}
+	return "", fmt.Errorf("could not resolve %s tip", defaultBranch)
 }
 
 // ResolveCommitOID resolves ref (branch name, tag, abbreviated SHA, or full
@@ -672,6 +682,12 @@ func ResolveCommitOID(v VCS, ref, dir string) (string, error) {
 			return "", fmt.Errorf("resolve %q: empty node", ref)
 		}
 		return out, nil
+	case "fossil":
+		sha, err := FossilResolve(dir, ref)
+		if err != nil {
+			return "", fmt.Errorf("resolve %q: %w", ref, err)
+		}
+		return sha, nil
 	default:
 		return "", fmt.Errorf("resolve not supported for vcs=%q", v.Name())
 	}
@@ -696,6 +712,8 @@ func WalkAncestors(vcs VCS, repoRoot string, maxDepth int) ([]string, error) {
 			return nil, err
 		}
 		return SplitNonEmpty(out), nil
+	case "fossil":
+		return FossilAncestors(repoRoot, "current", maxDepth)
 	default:
 		// Sapling: ancestors of `.` that are still draft.
 		out, err := SLCommandInDir(repoRoot, "log", "-r",
@@ -720,9 +738,27 @@ func LocalBranchTips(vcs VCS, repoRoot string) (map[string]string, error) {
 		return localBranchTipsGit(repoRoot)
 	case "jj":
 		return localBranchTipsJJ(repoRoot), nil
+	case "fossil":
+		return localBranchTipsFossil(repoRoot), nil
 	default:
 		return localBranchTipsSapling(repoRoot), nil
 	}
+}
+
+// localBranchTipsFossil maps each branch tip hash to its branch name.
+// Fossil branches are repository-global, so every branch counts as local.
+func localBranchTipsFossil(repoRoot string) map[string]string {
+	result := make(map[string]string)
+	branches, err := (&FossilVCS{}).Branches(repoRoot)
+	if err != nil {
+		return result
+	}
+	for _, name := range branches {
+		if sha, err := FossilResolve(repoRoot, name); err == nil {
+			result[sha] = name
+		}
+	}
+	return result
 }
 
 func localBranchTipsGit(repoRoot string) (map[string]string, error) {
@@ -788,6 +824,10 @@ func RemoteBranchTips(vcs VCS, repoRoot, defaultBranch string) ([]BranchEntry, e
 		return remoteBranchTipsGit(repoRoot, defaultBranch)
 	case "jj":
 		return remoteBranchTipsJJ(repoRoot, defaultBranch)
+	case "fossil":
+		// Fossil has no remote-tracking branches; all branches are surfaced
+		// via LocalBranchTips.
+		return nil, nil
 	default:
 		return remoteBranchTipsSapling(repoRoot, defaultBranch)
 	}
